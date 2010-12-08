@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "hmac.h"
 #include "jig.h"
 #include "oddebug.h"
 #include "usbdrv.h"
@@ -33,7 +34,8 @@ uchar usbFunctionWrite(uchar *data, uchar len)
 {
    memcpy(challenge + rxdChallengeBytes, data, len);
    rxdChallengeBytes += len;
-   return rxdChallengeBytes >= sizeof(challenge) ? 0 : 1;
+   challenged = rxdChallengeBytes >= sizeof(challenge);
+   return !challenged;
 }
 
 usbMsgLen_t usbFunctionSetup(uchar data[8])
@@ -43,16 +45,30 @@ usbMsgLen_t usbFunctionSetup(uchar data[8])
 
 void sendResponse(void)
 {
-   if (usbInterruptIsReady() && txdResponseBytes < sizeof(response)) {
+   if (usbInterruptIsReady()) {
+      if (txdResponseBytes >= sizeof(response)) {
+         responseReady = 0;
+         DBGMSG1("Response sent. All done!");
+         return;
+      }
       uchar sendBytes = sizeof(response) - txdResponseBytes > 8 ? 
                            8 : 
                            sizeof(response) - txdResponseBytes;
       usbSetInterrupt(response + txdResponseBytes, sendBytes);
+      txdResponseBytes += sendBytes;
    }
 }
 
 void formResponse(void)
 {
+   DBGX1("Challenge: ", challenge, sizeof(challenge));
+   memcpy_P(response, responseHeader, sizeof(responseHeader));
+   HMACOnce(usbDongleKey, sizeof(usbDongleKey),
+            challenge + CHALLENGE_OFFSET, sizeof(shadigest));
+   memcpy(response + RESPONSE_OFFSET, shadigest, sizeof(shadigest));
+   DBGX1("Response: ", response, sizeof(response));
+   responseReady = 1;
+   challenged = 0;
 }
 
 int main(void)
@@ -69,6 +85,5 @@ int main(void)
       if (challenged) formResponse();
       if (responseReady) sendResponse();
    }
-   return 0;
 }
 

@@ -112,7 +112,7 @@ TARGET = avr-jig
 OBJDIR = .
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = avr-jig.c usbdrv/usbdrv.c
+SRC = avr-jig.c usbdrv/usbdrv.c sha1.c hmac.c
 
 # List C++ source files here. (C dependencies are automatically generated.)
 CPPSRC = 
