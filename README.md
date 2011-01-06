@@ -8,13 +8,11 @@ Haven't really tested this on anything but my Arduino Mega, but it should work f
 Check google for what to do with this.
 
 
-----------------------------------------------------------
 
+Instructions for ATMega16A based dongles (added by c0d3m4st4)
+-------------------------------------------------------------
 
-Added by c0d3m4st4:
-
-
-To compile for the ATMega16A based dongles use this command line:
+To compile for the ATMega16A based dongles use this command line or edit the Makefile:
 
 make MCU=atmega16a BOARD=ATmega16aBasedDongle F_CPU=12000000
 
